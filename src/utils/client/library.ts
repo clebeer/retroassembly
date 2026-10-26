@@ -1,7 +1,7 @@
 import { capitalize, trim } from 'es-toolkit'
 import { parse } from 'goodcodes-parser'
 import { Nostalgist } from 'nostalgist'
-import { platformMap } from '../../constants/platform.ts'
+import { isArcadePlatform, platformMap } from '../../constants/platform.ts'
 import { getCDNUrl, libretroThumbnailsHost } from '../isomorphic/cdn.ts'
 
 type LibretroThumbnailType = 'boxart' | 'logo' | 'snap' | 'title'
@@ -73,28 +73,51 @@ export function getRomLibretroThumbnail(
   return getLibretroThumbnail({ host, name, platform, type })
 }
 
+// retroassembly-assets has no files for the platforms added in this fork: their icon and logo are served from public/,
+// and the other images are borrowed from a similar platform
+const forkPlatformAssets: Record<string, { banner: string; icon: string; imagesFrom: string }> = {
+  neogeo: {
+    banner: '/assets/platforms/neogeo/logo.svg',
+    icon: '/assets/platforms/neogeo/icon.svg',
+    imagesFrom: 'arcade',
+  },
+}
+
+function getAssetsPlatform(platform: string) {
+  return forkPlatformAssets[platform]?.imagesFrom ?? platform
+}
+
 export function getPlatformIcon(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/icons/${platform}.png`)
+  return (
+    forkPlatformAssets[platform]?.icon ??
+    getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/icons/${platform}.png`)
+  )
 }
 
 export function getPlatformGameIcon(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/contents/${platform}.svg`)
+  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/contents/${getAssetsPlatform(platform)}.svg`)
 }
 
 export function getPlatformBanner(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/logos/${platform}.svg`)
+  return (
+    forkPlatformAssets[platform]?.banner ??
+    getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/logos/${platform}.svg`)
+  )
 }
 
 export function getPlatformDevicePhoto(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/photos/${platform}.png`)
+  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/photos/${getAssetsPlatform(platform)}.png`)
 }
 
 export function getPlatformDeviceBackground(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/backgrounds/${platform}.png`)
+  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/backgrounds/${getAssetsPlatform(platform)}.png`)
 }
 
 export function getPlatformBluredBackground(platform: string) {
-  return getCDNUrl('arianrhodsandlot/retroassembly-assets', `platforms/blured-backgrounds/${platform}.jpg`)
+  return getCDNUrl(
+    'arianrhodsandlot/retroassembly-assets',
+    `platforms/blured-backgrounds/${getAssetsPlatform(platform)}.jpg`,
+  )
 }
 
 export function getRomGoodcodes(rom: { fileName?: string; rawGameMetadata?: any; name?: string; platform?: string }) {
@@ -104,7 +127,7 @@ export function getRomGoodcodes(rom: { fileName?: string; rawGameMetadata?: any;
     name = rom.name ?? ''
   }
 
-  if (rom.platform === 'arcade' && rom.rawGameMetadata?.libretro?.name) {
+  if (isArcadePlatform(rom.platform) && rom.rawGameMetadata?.libretro?.name) {
     name = rom.rawGameMetadata.libretro.name
   }
   return parse(`0 - ${name}`)

@@ -1,4 +1,5 @@
 import { BlobReader, BlobWriter, ZipReader } from '@zip.js/zip.js'
+import { isArcadePlatform } from '#@/constants/platform.ts'
 import { getFileMd5 } from '#@/utils/isomorphic/misc.ts'
 
 function isTinyFile(file: File) {
@@ -31,7 +32,7 @@ export async function getROMMd5(file: File, platform: string) {
     return
   }
 
-  if (platform === 'arcade') {
+  if (isArcadePlatform(platform)) {
     return getFileMd5(file)
   }
 

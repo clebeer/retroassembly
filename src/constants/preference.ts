@@ -180,7 +180,7 @@ export const defaultPreference: ResolvedPreference = {
     language: 'auto',
     libraryCoverSize: 'medium',
     libraryCoverType: 'boxart',
-    platforms: ['arcade', 'atari2600', 'gb', 'gba', 'gbc', 'genesis', 'nes', 'snes'],
+    platforms: ['arcade', 'atari2600', 'gb', 'gba', 'gbc', 'genesis', 'neogeo', 'nes', 'snes'],
     saturation: 100,
     saturationApplyToGame: false,
     saturationApplyToImages: false,

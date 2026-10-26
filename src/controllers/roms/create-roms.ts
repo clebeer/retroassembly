@@ -5,7 +5,7 @@ import { getContext } from 'hono/context-storage'
 import { HTTPException } from 'hono/http-exception'
 import { DateTime } from 'luxon'
 import { getRunTimeEnv } from '#@/constants/env.ts'
-import { platformMap, type PlatformName } from '#@/constants/platform.ts'
+import { isArcadePlatform, platformMap, type PlatformName } from '#@/constants/platform.ts'
 import { libraryModeEnum, romTable, statusEnum } from '#@/databases/schema.ts'
 import { getFilePartialDigest } from '#@/utils/server/file.ts'
 import { msleuth } from '#@/utils/server/msleuth.ts'
@@ -94,7 +94,7 @@ export async function createRom({ file, md5, platform }: { file: File; md5?: str
   try {
     const gameInfoList = await msleuth.identify({
       files: [{ md5: md5 || '', name: file.name }],
-      platform,
+      platform: isArcadePlatform(platform) ? 'arcade' : platform,
     })
     gameInfo = gameInfoList?.[0] || {}
   } catch (error) {

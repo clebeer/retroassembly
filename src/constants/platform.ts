@@ -275,6 +275,19 @@ const basePlatformMap = {
     },
     libretroName: 'Nintendo - Nintendo Entertainment System',
   },
+  neogeo: {
+    bioses: [{ name: 'neogeo.zip', required: true }],
+    cores: ['fbneo'],
+    displayNameI18nKey: 'platform.neoGeo',
+    fileExtensions: ['.zip'],
+    info: {
+      developer: 'SNK',
+      manufacturer: 'SNK',
+      notesI18nKey: 'platform.neoGeoNote',
+      releaseDate: '1990-04-26T00:00:00-07:00',
+    },
+    libretroName: 'MAME',
+  },
   nes: {
     cores: ['fceumm', 'nestopia', 'quicknes'],
     displayNameI18nKey: 'platform.nes',
@@ -488,3 +501,8 @@ export const platformMap: Record<PlatformName, Platform> = mapValues(
 )
 
 export const platforms = sortBy(Object.values(platformMap), ['displayNameI18nKey'])
+
+// Neo Geo games are arcade romsets (FBNeo/MAME short names in a .zip), so they are hashed and identified like arcade ones
+export function isArcadePlatform(platform: string | undefined) {
+  return platform === 'arcade' || platform === 'neogeo'
+}
