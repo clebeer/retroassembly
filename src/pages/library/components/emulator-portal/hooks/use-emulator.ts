@@ -1,4 +1,4 @@
-import { attemptAsync, delay, noop } from 'es-toolkit'
+import { attemptAsync, delay, noop, range } from 'es-toolkit'
 import NoSleep from 'nosleep.js'
 import { Nostalgist } from 'nostalgist'
 import { useEffect, useMemo } from 'react'
@@ -18,6 +18,7 @@ import { useRouter } from '#@/pages/library/hooks/use-router.ts'
 import { getFileUrl } from '#@/pages/library/utils/file.ts'
 import { focus, offCancel, onCancel } from '#@/pages/library/utils/spatial-navigation.ts'
 import type { loader } from '#@/pages/routes/library-platform-rom.tsx'
+import { Gamepad } from '#@/utils/client/gamepad.ts'
 import { getCDNUrl } from '#@/utils/isomorphic/cdn.ts'
 import { getGlobalCSSVars } from '#@/utils/isomorphic/misc.ts'
 import { usePreference } from '../../../hooks/use-preference.ts'
@@ -38,6 +39,19 @@ const defaultRetroarchConfig: RetroarchConfig = {
   video_gpu_screenshot: true,
   // @ts-expect-error this option is not yet listed in types
   video_viewport_bias_y: 0.1,
+}
+
+const retroarchConfigPath = '/home/web_user/retroarch/userdata/retroarch.cfg'
+const maxPlayers = 4
+
+// retroarch.cfg is written while preparing, when the active gamepad may not be known yet, so ports are assigned on launch
+function assignJoypadsToPlayers(emulator: Nostalgist, activeIndex: number) {
+  const joypadIndexes = [activeIndex, ...range(maxPlayers).filter((index) => index !== activeIndex)]
+  const lines = joypadIndexes.map((joypadIndex, i) => `input_player${i + 1}_joypad_index = "${joypadIndex}"`)
+  const fs = emulator.getEmscriptenFS()
+  const config: string = fs.readFile(retroarchConfigPath, { encoding: 'utf8' })
+  const configWithoutJoypadIndexes = config.replaceAll(/^input_player\d+_joypad_index = .*\n?/gmu, '')
+  fs.writeFile(retroarchConfigPath, `${configWithoutJoypadIndexes.trimEnd()}\n${lines.join('\n')}\n`)
 }
 
 let noSleep: NoSleep
@@ -115,6 +129,15 @@ export function useEmulator() {
         } catch {}
       })
     }
+
+    emulator.getEmulator().on('beforeLaunch', () => {
+      const activeIndex = Gamepad.getActiveGamepad()?.index
+      if (activeIndex) {
+        try {
+          assignJoypadsToPlayers(emulator, activeIndex)
+        } catch {}
+      }
+    })
 
     const canvas = emulator.getCanvas()
     canvas.setAttribute('tabindex', '-1')

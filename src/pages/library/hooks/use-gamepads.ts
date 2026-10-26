@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { Gamepad, pickActiveGamepad } from '#@/utils/client/gamepad.ts'
 
 function subscribe(callback) {
   const abortController = new AbortController()
@@ -46,9 +47,14 @@ function getSnapshot() {
   }
 }
 
+function getActiveIndex() {
+  return Gamepad.activeIndex
+}
+
 export function useGamepads() {
   const gamepads = useSyncExternalStore(subscribe, getSnapshot, () => null)
-  const gamepad = gamepads?.[0]
+  const activeIndex = useSyncExternalStore(Gamepad.onActiveIndexChange, getActiveIndex, getActiveIndex)
+  const gamepad = pickActiveGamepad(gamepads, activeIndex)
   const connected = Boolean(gamepad)
   return { connected, gamepad, gamepads }
 }
